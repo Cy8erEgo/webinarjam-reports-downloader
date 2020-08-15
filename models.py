@@ -6,8 +6,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
+from selenium.common.exceptions import TimeoutException, JavascriptException
 
-from config import *
+from exceptions import NoDataException, NoMoreWebinarsException
+
+
+SITE_URL = "https://app.webinarjam.com/my-registrants"
 
 
 class BrowserActions:
@@ -15,7 +19,7 @@ class BrowserActions:
 
 
 class WebinarjamController:
-    def __init__(self):
+    def __init__(self, login, password):
         self._reports_dir = os.path.join(
             os.path.abspath(os.path.dirname(__file__)), "reports"
         )
@@ -30,7 +34,7 @@ class WebinarjamController:
         self.open = self._driver.get
 
         # login
-        self.login()
+        self.login(login, password)
 
     def _open_in_new_tab(self, url):
         """
@@ -49,12 +53,11 @@ class WebinarjamController:
         """
         Closes active tab
         """
-        self._driver.execute_script("window.close();")
-        # TODO: sleep maybe?
+        self._driver.execute_script("window.close();") # TODO: sleep maybe?
         sleep(1)
         self._driver.switch_to.window(self._driver.window_handles[-1])
 
-    def login(self):
+    def login(self, login, password):
         self.open(SITE_URL)
 
         login_el = WebDriverWait(self._driver, 10).until(
@@ -63,8 +66,8 @@ class WebinarjamController:
         passwd_el = self._driver.find_element_by_css_selector("input#password")
         submit_el = self._driver.find_element_by_css_selector("button")
 
-        login_el.send_keys(SITE_LOGIN)
-        passwd_el.send_keys(SITE_PASSWD)
+        login_el.send_keys(login)
+        passwd_el.send_keys(password)
         passwd_el.send_keys(Keys.ENTER)
 
         # select "EverWebinar"
@@ -73,7 +76,7 @@ class WebinarjamController:
                 (By.XPATH, './/a[contains(text(), "Access")]')
             )
         )
-
+        # TODO:
         # кликнуть по кнопку почему-то не выходит
         # second_choice_el.click()
 
@@ -85,47 +88,37 @@ class WebinarjamController:
             ec.visibility_of_element_located((By.CSS_SELECTOR, "a.nav-link"))
         )
 
-    def apply_filter(self):
+    def apply_filter(self, webinar_index):
+        # должен быть на странице с фильтром
+
         def select_option(filter_el, index):
             filter_el.find_element_by_tag_name("button").click()
 
             # wait for the dropdown to appear
-            dropdown_container_el = WebDriverWait(self._driver, 10).until(
+            WebDriverWait(self._driver, 10).until(
                 ec.visibility_of_element_located(
                     (By.CLASS_NAME, "v-dropdown-container")
                 )
             )
-            dropdown_items = dropdown_container_el.find_elements_by_class_name(
-                "v-dropdown-item"
-            )
 
-            # select the first option
+            # select some option
             self._driver.execute_script(
                 f'document.querySelectorAll(".v-dropdown-item")[{index}].click()'
             )
-            # webinar_filter_el.find_element_by_tag_name("button").click()
 
-        # должен быть на странице с фильтром
         (
             webinar_filter_el,
             session_filter_el,
             event_filter_el,
         ) = self._driver.find_elements_by_xpath(
             '//div[@class="col-4"]/div[contains(@class, "form-group")]'
-        )
+        )[:3]
 
         # SELECT WEBINAR
-        select_option(webinar_filter_el, 1)
-        # webinar_filter_el.find_element_by_tag_name("button").click()
-
-        # wait for the dropdown to appear
-        # dropdown_container_el = WebDriverWait(self._driver, 10).until(ec.visibility_of_element_located((By.CLASS_NAME, "v-dropdown-container")))
-        # dropdown_items = dropdown_container_el.find_elements_by_class_name("v-dropdown-item")
-
-        # select the first option
-        # for i in range(1, len(dropdown_items))[:1]:  # TODO: fix :1
-        #     self._driver.execute_script(f'document.querySelectorAll(".v-dropdown-item")[{i}].click()')
-        #     webinar_filter_el.find_element_by_tag_name("button").click()
+        try:
+            select_option(webinar_filter_el, webinar_index)
+        except JavascriptException:
+            raise NoMoreWebinarsException
 
         # SELECT SESSION
         select_option(session_filter_el, 1)
@@ -136,28 +129,23 @@ class WebinarjamController:
         # click GO button
         btn_go_el = self._driver.find_element_by_css_selector("button#go")
         btn_go_el.click()
+        # self._driver.execute_script("document.querySelector('button#go').click()")
 
         # wait a little bit
-        WebDriverWait(self._driver, 15).until(
-            ec.visibility_of_element_located((By.CSS_SELECTOR, "table.table"))
-        )
-
-    def get_report(self):
-        # должен быть авторизован
-        # TODO: избавиться от хардкода
-
-        # go to the report creation page
-        self.open("https://app.webinarjam.com/my-registrants")
-
-        # wait for loading
-        WebDriverWait(self._driver, 15).until(
-            ec.visibility_of_element_located(
-                (By.XPATH, '//h3[contains(text(), "active registrants")]')
+        try:
+            WebDriverWait(self._driver, 15).until(
+                ec.visibility_of_element_located((By.CSS_SELECTOR, "table.table"))
             )
-        )
+        except TimeoutException:
+            # no data, possibly
+            raise NoDataException
 
+    def get_report_by_webinar(self, webinar_index):
         # apply filter
-        self.apply_filter()
+        try:
+            self.apply_filter(webinar_index)
+        except NoDataException:
+            return
 
         # export
         btn_export_el_1 = self._driver.find_element_by_xpath(
@@ -199,3 +187,30 @@ class WebinarjamController:
 
         while get_reports_cnt() == reports_cnt_start:
             sleep(1)
+
+    def get_all_reports(self):
+        """
+        Get a list of reports for all webinars
+        """
+        # должен быть авторизован
+        # TODO: избавиться от хардкода
+
+        # go to the report creation page
+        self.open("https://app.webinarjam.com/my-registrants")
+
+        # wait for loading
+        WebDriverWait(self._driver, 15).until(
+            ec.visibility_of_element_located(
+                (By.XPATH, '//h3[contains(text(), "active registrants")]')
+            )
+        )
+
+        for webinar_index in range(1, 100):
+            print(f"Downloading the report #{webinar_index}")
+            try:
+                self.get_report_by_webinar(webinar_index)
+            except NoMoreWebinarsException:
+                print("No more webinars")
+                break
+
+        # self._driver.close()
