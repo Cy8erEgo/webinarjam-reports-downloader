@@ -260,3 +260,8 @@ tags
 
 # Private data
 config.py
+
+# Etc
+/reports
+
+
