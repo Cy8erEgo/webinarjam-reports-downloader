@@ -5,7 +5,7 @@ from utils import get_registrants_from_csv, write_registrants_to_db, clear_repor
 from config import *
 
 
-HEADLESS = False
+HEADLESS = True 
 
 # set up argparse
 arg_parser = argparse.ArgumentParser()
@@ -47,6 +47,8 @@ def main():
         logger.info("profit!")
     except KeyboardInterrupt:
         logger.info("exited")
+    except Exception as e:
+        logger.error(str(e).strip())
 
 
 if __name__ == "__main__":

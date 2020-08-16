@@ -205,20 +205,23 @@ class WebinarjamController:
         }
         event_index = event_map[event]
 
-        # go to the report creation page
-        self.open(SITE_URL)
+        try:
+            # go to the report creation page
+            self.open(SITE_URL)
 
-        # wait for loading
-        WebDriverWait(self._driver, 15).until(
-            ec.visibility_of_element_located(
-                (By.XPATH, '//h3[contains(text(), "active registrants")]')
+            # wait for loading
+            WebDriverWait(self._driver, 15).until(
+                ec.visibility_of_element_located(
+                    (By.XPATH, '//h3[contains(text(), "active registrants")]')
+                )
             )
-        )
 
-        for webinar_index in range(1, 100):
-            self._logger.info(f"step 1: downloading the report #{webinar_index}...")
-            try:
-                self.get_report_by_webinar(webinar_index, event_index)
-            except NoMoreWebinarsException:
-                self._logger.info("end of webinar list reached")
-                break
+            for webinar_index in range(1, 100):
+                self._logger.info(f"step 1: downloading the report #{webinar_index}...")
+                try:
+                    self.get_report_by_webinar(webinar_index, event_index)
+                except NoMoreWebinarsException:
+                    self._logger.info("end of webinar list reached")
+                    break
+        finally:
+            self.close()
