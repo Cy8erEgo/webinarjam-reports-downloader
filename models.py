@@ -11,7 +11,7 @@ from selenium.common.exceptions import TimeoutException, JavascriptException
 from exceptions import NoDataException, NoMoreWebinarsException
 
 
-SITE_URL = "https://app.webinarjam.com/my-registrants"
+SITE_URL = "https://app.webinarjam.com"
 
 
 class WebinarjamController:
@@ -59,7 +59,7 @@ class WebinarjamController:
         self._driver.switch_to.window(self._driver.window_handles[-1])
 
     def login(self, login, password):
-        self.open(SITE_URL)
+        self.open(f"{SITE_URL}/my-registrants")
 
         login_el = WebDriverWait(self._driver, 10).until(
             ec.presence_of_element_located((By.CSS_SELECTOR, "input#email"))
@@ -81,7 +81,7 @@ class WebinarjamController:
         # кликнуть по кнопку почему-то не выходит
         # second_choice_el.click()
 
-        self.open("https://app.webinarjam.com/app/ew")
+        self.open(f"{SITE_URL}/app/ew")
         # TODO: здесь переиодически возникает затык: переадресует обратнно в /home
 
         # # wait for loading

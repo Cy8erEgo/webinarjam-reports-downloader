@@ -22,10 +22,6 @@ def get_registrants_from_csv() -> List[List]:
     return registrants
 
 
-# def get_registrants_from_db(db_host: str, db_name: str, db_login: str, db_pass: str):
-#     pass
-
-
 def write_registrants_to_db(registrants: list, db_host: str, db_login: str, db_pass: str, db_name: str) -> None:
     params = {
         "host": db_host,
@@ -127,7 +123,7 @@ def configure_logging(file_name):
     logger.addHandler(c_handler)
     logger.addHandler(f_handler)
 
-    # Очистка лога
+    # clean the log
     log_size = os.path.getsize(file_path)
 
     if log_size > 500000:
