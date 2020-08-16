@@ -1,0 +1,8 @@
+SITE_LOGIN = ""
+SITE_PASSWD = ""
+DATABASE = {
+    "host": "localhost",
+    "name": "",
+    "user": "",
+    "password": ""
+}
