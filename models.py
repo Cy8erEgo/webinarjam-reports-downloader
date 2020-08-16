@@ -66,29 +66,27 @@ class WebinarjamController:
             ec.presence_of_element_located((By.CSS_SELECTOR, "input#email"))
         )
         passwd_el = self._driver.find_element_by_css_selector("input#password")
-        submit_el = self._driver.find_element_by_css_selector("button")
 
         login_el.send_keys(login)
         passwd_el.send_keys(password)
         passwd_el.send_keys(Keys.ENTER)
 
-        # select "EverWebinar"
-        second_choice_el = WebDriverWait(self._driver, 15).until(
-            ec.visibility_of_element_located(
-                (By.XPATH, './/a[contains(text(), "Access")]')
-            )
-        )
-        # TODO:
-        # кликнуть по кнопку почему-то не выходит
-        # second_choice_el.click()
-
         self.open("https://app.webinarjam.com/app/ew")
-        # TODO: здесь переиодически возникает затык: переадресует обратнно в /home
 
-        # # wait for loading
-        WebDriverWait(self._driver, 15).until(
-            ec.visibility_of_element_located((By.CSS_SELECTOR, "a.nav-link"))
-        )
+        # wait for loading
+        try:
+            WebDriverWait(self._driver, 15).until(
+                ec.visibility_of_element_located((By.CSS_SELECTOR, "a.nav-link"))
+            )
+        except TimeoutException:
+            # probably threw back, attempt to click
+            # select "EverWebinar"
+            second_choice_el = WebDriverWait(self._driver, 15).until(
+                ec.visibility_of_element_located(
+                    (By.XPATH, './/a[contains(text(), "Access")]')
+                )
+            )
+            second_choice_el.click()
 
     def apply_filter(self, webinar_index, event_index):
         def select_option(filter_el, index):
