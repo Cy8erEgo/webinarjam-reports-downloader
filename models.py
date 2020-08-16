@@ -11,11 +11,11 @@ from selenium.common.exceptions import TimeoutException, JavascriptException
 from exceptions import NoDataException, NoMoreWebinarsException
 
 
-SITE_URL = "https://app.webinarjam.com"
+SITE_URL = "https://app.webinarjam.com/my-registrants"
 
 
 class WebinarjamController:
-    def __init__(self, login, password, logger=None):
+    def __init__(self, login, password, headless=True, logger=None):
         self._reports_dir = os.path.join(
             os.path.abspath(os.path.dirname(__file__)), "reports"
         )
@@ -24,7 +24,8 @@ class WebinarjamController:
         # start a browser
         options = webdriver.ChromeOptions()
         prefs = {"download.default_directory": self._reports_dir}
-        # options.add_argument("--headless")
+        if headless:
+            options.add_argument("--headless")
         options.add_experimental_option("prefs", prefs)
 
         self._driver = webdriver.Chrome(chrome_options=options)
@@ -59,7 +60,7 @@ class WebinarjamController:
         self._driver.switch_to.window(self._driver.window_handles[-1])
 
     def login(self, login, password):
-        self.open(f"{SITE_URL}/my-registrants")
+        self.open(SITE_URL)
 
         login_el = WebDriverWait(self._driver, 10).until(
             ec.presence_of_element_located((By.CSS_SELECTOR, "input#email"))
@@ -81,7 +82,7 @@ class WebinarjamController:
         # кликнуть по кнопку почему-то не выходит
         # second_choice_el.click()
 
-        self.open(f"{SITE_URL}/app/ew")
+        self.open("https://app.webinarjam.com/app/ew")
         # TODO: здесь переиодически возникает затык: переадресует обратнно в /home
 
         # # wait for loading
