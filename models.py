@@ -127,7 +127,6 @@ class WebinarjamController:
         # click GO button
         btn_go_el = self._driver.find_element_by_css_selector("button#go")
         btn_go_el.click()
-        # self._driver.execute_script("document.querySelector('button#go').click()")
 
         # wait a little bit
         try:
@@ -175,7 +174,9 @@ class WebinarjamController:
 
         reports_cnt_start = get_reports_cnt()
 
-        self._driver.execute_script("document.querySelectorAll('.modal-content button.btn-success')[3].click()")
+        self._driver.execute_script(
+            "document.querySelectorAll('.modal-content button.btn-success')[3].click()"
+        )
 
         # wait for the report to download
         modal_el = self._driver.find_elements_by_class_name("modal-content")[-1]
@@ -199,7 +200,7 @@ class WebinarjamController:
             "last 7 days": 6,
             "this month": 7,
             "last month": 8,
-            "last 30 days": 9
+            "last 30 days": 9,
         }
         event_index = event_map[event]
 

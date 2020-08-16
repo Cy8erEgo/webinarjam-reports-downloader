@@ -10,7 +10,7 @@ import pymysql.cursors
 REPORTS_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), "reports")
 
 
-def get_registrants_from_csv() -> List[List]:
+def get_registrants_from_csv() -> List:
     """
     Receives a list of registrants from reports
     """
@@ -75,7 +75,7 @@ def write_registrants_to_db(registrants: list, db_host: str, db_login: str, db_p
                         registrant["Event"],
                         registrant["Attended live date"],
                         registrant["Time to enter live room"],
-                        registrant["GDPR date"]
+                        registrant["GDPR date"],
                     )
                 )
 
@@ -114,8 +114,12 @@ def configure_logging(file_name):
     c_handler.setLevel(logging.INFO)
     f_handler.setLevel(logging.INFO)
 
-    c_format = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s', datefmt='%H:%M:%S')
-    f_format = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
+    c_format = logging.Formatter(
+        "[%(levelname)s] %(asctime)s - %(message)s", datefmt="%H:%M:%S"
+    )
+    f_format = logging.Formatter(
+        "[%(levelname)s] %(asctime)s - %(message)s", datefmt="%d-%m-%Y %H:%M:%S"
+    )
 
     c_handler.setFormatter(c_format)
     f_handler.setFormatter(f_format)
@@ -127,7 +131,7 @@ def configure_logging(file_name):
     log_size = os.path.getsize(file_path)
 
     if log_size > 500000:
-        command = r'>' + file_path
+        command = r">" + file_path
         os.system(command)
 
     return logger

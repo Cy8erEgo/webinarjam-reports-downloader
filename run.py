@@ -1,17 +1,35 @@
 import argparse
 
 from models import WebinarjamController
-from utils import get_registrants_from_csv, write_registrants_to_db, clear_reports, configure_logging
+from utils import (
+    get_registrants_from_csv,
+    write_registrants_to_db,
+    clear_reports,
+    configure_logging,
+)
 from config import *
 
 
-HEADLESS = True 
+HEADLESS = True
 
 # set up argparse
 arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument("-e", "--event", default="yesterday", choices=["yesterday", "all time", "today", "this week",
-                                                                       "last week", "last 7 days", "this month",
-                                                                       "last month", "last 30 days"])
+arg_parser.add_argument(
+    "-e",
+    "--event",
+    default="yesterday",
+    choices=[
+        "yesterday",
+        "all time",
+        "today",
+        "this week",
+        "last week",
+        "last 7 days",
+        "this month",
+        "last month",
+        "last 30 days",
+    ],
+)
 args = arg_parser.parse_args()
 
 # set up logging
@@ -26,7 +44,9 @@ def main():
         clear_reports()
 
         logger.info("step 1: scraping reports")
-        app = WebinarjamController(SITE_LOGIN, SITE_PASSWD, headless=HEADLESS, logger=logger)
+        app = WebinarjamController(
+            SITE_LOGIN, SITE_PASSWD, headless=HEADLESS, logger=logger
+        )
         app.get_all_reports(event=args.event)  # for all webinars
 
         # get all registrants from all downloaded csv reports (in the reports directory)
