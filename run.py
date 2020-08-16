@@ -28,7 +28,6 @@ def main():
         logger.info("step 1: scraping reports")
         app = WebinarjamController(SITE_LOGIN, SITE_PASSWD, headless=HEADLESS, logger=logger)
         app.get_all_reports(event=args.event)  # for all webinars
-        app.close()
 
         # get all registrants from all downloaded csv reports (in the reports directory)
         logger.info("step 2: getting all registrants from all reports")
