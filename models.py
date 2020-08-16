@@ -14,19 +14,17 @@ from exceptions import NoDataException, NoMoreWebinarsException
 SITE_URL = "https://app.webinarjam.com/my-registrants"
 
 
-class BrowserActions:
-    pass
-
-
 class WebinarjamController:
-    def __init__(self, login, password):
+    def __init__(self, login, password, logger=None):
         self._reports_dir = os.path.join(
             os.path.abspath(os.path.dirname(__file__)), "reports"
         )
+        self._logger = logger
 
         # start a browser
         options = webdriver.ChromeOptions()
         prefs = {"download.default_directory": self._reports_dir}
+        # options.add_argument("--headless")
         options.add_experimental_option("prefs", prefs)
 
         self._driver = webdriver.Chrome(chrome_options=options)
@@ -35,6 +33,9 @@ class WebinarjamController:
 
         # login
         self.login(login, password)
+
+    def close(self):
+        self._driver.close()
 
     def _open_in_new_tab(self, url):
         """
@@ -53,7 +54,7 @@ class WebinarjamController:
         """
         Closes active tab
         """
-        self._driver.execute_script("window.close();") # TODO: sleep maybe?
+        self._driver.execute_script("window.close();")
         sleep(1)
         self._driver.switch_to.window(self._driver.window_handles[-1])
 
@@ -88,9 +89,7 @@ class WebinarjamController:
             ec.visibility_of_element_located((By.CSS_SELECTOR, "a.nav-link"))
         )
 
-    def apply_filter(self, webinar_index):
-        # должен быть на странице с фильтром
-
+    def apply_filter(self, webinar_index, event_index):
         def select_option(filter_el, index):
             filter_el.find_element_by_tag_name("button").click()
 
@@ -124,7 +123,7 @@ class WebinarjamController:
         select_option(session_filter_el, 1)
 
         # SELECT EVENT
-        select_option(event_filter_el, 3)
+        select_option(event_filter_el, event_index)
 
         # click GO button
         btn_go_el = self._driver.find_element_by_css_selector("button#go")
@@ -140,10 +139,10 @@ class WebinarjamController:
             # no data, possibly
             raise NoDataException
 
-    def get_report_by_webinar(self, webinar_index):
+    def get_report_by_webinar(self, webinar_index, event_index):
         # apply filter
         try:
-            self.apply_filter(webinar_index)
+            self.apply_filter(webinar_index, event_index)
         except NoDataException:
             return
 
@@ -188,15 +187,25 @@ class WebinarjamController:
         while get_reports_cnt() == reports_cnt_start:
             sleep(1)
 
-    def get_all_reports(self):
+    def get_all_reports(self, event: str):
         """
         Get a list of reports for all webinars
         """
-        # должен быть авторизован
-        # TODO: избавиться от хардкода
+        event_map = {
+            "all time": 1,
+            "today": 2,
+            "yesterday": 3,
+            "this week": 4,
+            "last week": 5,
+            "last 7 days": 6,
+            "this month": 7,
+            "last month": 8,
+            "last 30 days": 9
+        }
+        event_index = event_map[event]
 
         # go to the report creation page
-        self.open("https://app.webinarjam.com/my-registrants")
+        self.open(SITE_URL)
 
         # wait for loading
         WebDriverWait(self._driver, 15).until(
@@ -206,11 +215,9 @@ class WebinarjamController:
         )
 
         for webinar_index in range(1, 100):
-            print(f"Downloading the report #{webinar_index}")
+            self._logger.info(f"step 1: downloading the report #{webinar_index}...")
             try:
-                self.get_report_by_webinar(webinar_index)
+                self.get_report_by_webinar(webinar_index, event_index)
             except NoMoreWebinarsException:
-                print("No more webinars")
+                self._logger.info("end of webinar list reached")
                 break
-
-        # self._driver.close()
