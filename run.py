@@ -52,6 +52,7 @@ def main():
         # get all registrants from all downloaded csv reports (in the reports directory)
         logger.info("step 2: getting all registrants from all reports")
         registrants = get_registrants_from_csv()
+        logger.info("step 2: got {} registrant(s)".format(len(registrants)))
 
         # write the registrants to the database
         logger.info("step 3: writing the registrants to the database")
