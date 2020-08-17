@@ -23,6 +23,7 @@ class WebinarjamController:
 
         # start a browser
         options = webdriver.ChromeOptions()
+        options.add_argument("--no-sandbox")
         prefs = {"download.default_directory": self._reports_dir}
         if headless:
             options.add_argument("--headless")
