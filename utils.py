@@ -17,7 +17,7 @@ def get_registrants_from_csv() -> List:
     registrants = []
     for report_name in os.listdir(REPORTS_DIR):
         with open(os.path.join(REPORTS_DIR, report_name), newline="") as report_csv:
-            report_registrants = list(csv.DictReader(report_csv))[1:]
+            report_registrants = list(csv.DictReader(report_csv))
             registrants.extend(report_registrants)
     return registrants
 
