@@ -3,11 +3,19 @@ import csv
 from typing import List
 from contextlib import closing
 import logging
+from datetime import datetime
 
 import pymysql.cursors
 
 
 REPORTS_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), "reports")
+
+
+def datetime_normalize(dt: str) -> str:
+    fmt = "%a, %d %b %Y, %I:%M %p"
+    parsed_dt = datetime.strptime(dt, fmt)
+    new_dt = parsed_dt.strftime("%Y-%m-%d %H:%M")
+    return new_dt
 
 
 def get_registrants_from_csv() -> List:
@@ -19,6 +27,10 @@ def get_registrants_from_csv() -> List:
         with open(os.path.join(REPORTS_DIR, report_name), newline="") as report_csv:
             report_registrants = list(csv.DictReader(report_csv))
             registrants.extend(report_registrants)
+
+    # convert "Registration date" to a specific format
+    for reg in registrants:
+        reg["Registration date"] = datetime_normalize(reg["Registration date"])
     return registrants
 
 
