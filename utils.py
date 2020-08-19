@@ -30,9 +30,6 @@ def get_registrants_from_csv() -> List:
             report_registrants = list(csv.DictReader(report_csv))
             registrants.extend(report_registrants)
 
-    # convert "Registration date" to a specific format
-    for reg in registrants:
-        reg["Registration date"] = datetime_normalize(reg["Registration date"])
     return registrants
 
 
