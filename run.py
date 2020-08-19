@@ -78,7 +78,7 @@ def main():
     except KeyboardInterrupt:
         logger.info("exited")
     except Exception:
-        logger.critical(exc_info=True)
+        logger.critical("critical error occurred", exc_info=True)
 
 
 if __name__ == "__main__":
