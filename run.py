@@ -49,7 +49,7 @@ def main():
         )
         app.get_all_reports(event=args.event)  # for all webinars
 
-        # get all registrants from all downloaded csv reports (in the reports directory)
+        # get all registrants from the downloaded csv reports (in the reports directory)
         logger.info("step 2: getting all registrants from all reports")
         registrants = get_registrants_from_csv()
         logger.info("step 2: got {} registrant(s)".format(len(registrants)))
@@ -67,8 +67,8 @@ def main():
         logger.info("profit!")
     except KeyboardInterrupt:
         logger.info("exited")
-    except Exception as e:
-        logger.error(str(e).strip())
+    except Exception:
+        logger.critical(exc_info=True)
 
 
 if __name__ == "__main__":
