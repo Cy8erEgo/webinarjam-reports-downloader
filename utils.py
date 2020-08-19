@@ -12,6 +12,8 @@ REPORTS_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), "reports"
 
 
 def datetime_normalize(dt: str) -> str:
+    if not dt:
+        return dt
     fmt = "%a, %d %b %Y, %I:%M %p"
     parsed_dt = datetime.strptime(dt, fmt)
     new_dt = parsed_dt.strftime("%Y-%m-%d %H:%M")
