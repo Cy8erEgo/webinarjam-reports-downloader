@@ -43,11 +43,21 @@ def main():
         # delete old reports
         clear_reports()
 
-        logger.info("step 1: scraping reports")
-        app = WebinarjamController(
-            SITE_LOGIN, SITE_PASSWD, headless=HEADLESS, logger=logger
-        )
-        app.get_all_reports(event=args.event)  # for all webinars
+        # try to download all reports from the site
+        # 3 attempts
+        for _ in range(3):
+            try:
+                logger.info("step 1: scraping reports")
+
+                app = WebinarjamController(
+                    SITE_LOGIN, SITE_PASSWD, headless=HEADLESS, logger=logger
+                )
+                app.get_all_reports(event=args.event)  # for all webinars
+                break
+            except Exception:
+                logger.error("failed to download reports", exc_info=True)
+        else:
+            logger.error("3 failed attempts achieved, terminating the program")
 
         # get all registrants from the downloaded csv reports (in the reports directory)
         logger.info("step 2: getting all registrants from all reports")
