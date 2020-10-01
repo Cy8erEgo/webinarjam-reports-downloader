@@ -58,6 +58,7 @@ def main():
                 logger.error("failed to download reports", exc_info=True)
         else:
             logger.error("3 failed attempts achieved, terminating the program")
+            exit(1)
 
         # get all registrants from the downloaded csv reports (in the reports directory)
         logger.info("step 2: getting all registrants from all reports")
