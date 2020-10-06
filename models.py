@@ -14,6 +14,18 @@ from exceptions import NoDataException, NoMoreWebinarsException
 SITE_URL = "https://app.webinarjam.com/my-registrants"
 
 
+def try_until_it_works(func):
+    def wrapper(*args, **kwargs):
+        for i in range(1, 8):
+            try:
+                print(f"Attempt {i}")
+                func(*args, **kwargs)
+                return
+            except TimeoutException:
+                pass
+    return wrapper
+
+
 class WebinarjamController:
     def __init__(self, login, password, headless=True, logger=None):
         self._reports_dir = os.path.join(
@@ -39,6 +51,9 @@ class WebinarjamController:
     def close(self):
         self._driver.close()
 
+    def get_reports_cnt(self):
+        return len(os.listdir(self._reports_dir))
+
     def _open_in_new_tab(self, url):
         """
         Creates a new tab and switches context to it
@@ -59,6 +74,13 @@ class WebinarjamController:
         self._driver.execute_script("window.close();")
         sleep(1)
         self._driver.switch_to.window(self._driver.window_handles[-1])
+
+    def _close_modal(self):
+        modal_el = self._driver.find_elements_by_class_name("modal-content")[-1]
+        modal_el.find_elements_by_css_selector("button.close")[-1].click()
+        WebDriverWait(self._driver, 5).until(
+            ec.invisibility_of_element_located(modal_el)
+    )
 
     def login(self, login, password):
         self.open(SITE_URL)
@@ -138,6 +160,7 @@ class WebinarjamController:
             # no data, possibly
             raise NoDataException
 
+    @try_until_it_works
     def get_report_by_webinar(self, webinar_index, event_index):
         # apply filter
         try:
@@ -170,23 +193,22 @@ class WebinarjamController:
         )
 
         # click on "Export"
-        def get_reports_cnt():
-            return len(os.listdir(self._reports_dir))
-
-        reports_cnt_start = get_reports_cnt()
-
-        self._driver.execute_script(
-            "document.querySelectorAll('.modal-content button.btn-success')[3].click()"
-        )
-
-        # wait for the report to download
         modal_el = self._driver.find_elements_by_class_name("modal-content")[-1]
-        WebDriverWait(self._driver, 60).until(
-            ec.invisibility_of_element_located(modal_el)
-        )
+        reports_cnt_start = self.get_reports_cnt()
 
-        while get_reports_cnt() == reports_cnt_start:
-            sleep(1)
+        try:
+            self._driver.execute_script(
+                "document.querySelectorAll('.modal-content button.btn-success')[3].click()"
+            )
+            # wait for the report to download
+            WebDriverWait(self._driver, 60).until(
+                ec.invisibility_of_element_located(modal_el)
+            )
+            while self.get_reports_cnt() == reports_cnt_start:
+                sleep(1)
+        except TimeoutException:
+            self._close_modal()
+            raise
 
     def get_all_reports(self, event: str):
         """
